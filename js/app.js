@@ -4,6 +4,12 @@ let cliente = {
     pedido: []
 }
 
+const categorias = {
+    1: 'Comida',
+    2: 'Bebidas',
+    3: 'Postres'
+}
+
 const btnGuardarCliente = document.querySelector('#guardar-cliente');
 btnGuardarCliente.addEventListener('click', guardarCliente);
 
@@ -60,6 +66,104 @@ function obtenerPlatillos(){
 
     fetch(url)
         .then( response => response.json())
-        .then( resultado => console.log(resultado))
+        .then( resultado => mostrarPlatillos(resultado))
         .catch( fail => console.log(fail))
+}
+
+function mostrarPlatillos(platillos){
+    const contenido = document.querySelector('#platillos .contenido')
+    platillos.forEach( platillo =>{
+        const row = document.createElement('DIV');
+        row.classList.add('row', 'py-3');
+
+        const nombre = document.createElement('DIV');
+        nombre.classList.add('col-md-4');
+        nombre.textContent = platillo.nombre;
+
+        const precio = document.createElement('DIV');
+        precio.classList.add('col-md-3', 'fw-bold');
+        precio.textContent = `$${platillo.precio}`;
+
+        const categoria = document.createElement('DIV');
+        categoria.classList.add('col-md-3');
+        categoria.textContent = categorias[platillo.categoria];
+
+        const inputCantidad = document.createElement('INPUT');
+        inputCantidad.type = 'number';
+        inputCantidad.min = 0;
+        inputCantidad.value = 0;
+        inputCantidad.id = `producto-${platillo.id}`;
+        inputCantidad.classList.add('form-control');
+
+        //Funcion que detecta la cantidad y el platillo que se esta agregando
+
+        inputCantidad.onchange = function(){
+            const cantidad = parseInt(inputCantidad.value);
+            agregarPlatillo({...platillo, cantidad})
+        }
+
+        const agregar = document.createElement('DIV')
+        agregar.classList.add('col-md-2');
+        agregar.appendChild(inputCantidad)
+
+        row.appendChild(nombre);
+        row.appendChild(precio);
+        row.appendChild(categoria);
+        row.appendChild(agregar);
+
+        contenido.appendChild(row);
+    })
+
+}
+
+function agregarPlatillo(producto){
+
+    //Extraer el pedido actual
+    let { pedido } = cliente;
+    
+    //Revisar que la cantidad sea mayor a 0
+        if(producto.cantidad > 0){
+
+        //Comprueba si el elemento existe en el array
+            if(pedido.some( articulo => articulo.id === producto.id)){
+                //Si el articulo existe, actualizamos la cantidad
+                const pedidoActualizado = pedido.map( articulo =>{
+                    if(articulo.id === producto.id){
+                        articulo.cantidad = producto.cantidad
+                    }
+                    return articulo
+                });
+                // Se asigna el nuevo array a cliente.pedido
+                cliente.pedido = [...pedidoActualizado]
+            }else{
+                //Si el articulo no existe lo agregamos al array de peliculas
+                cliente.pedido = [...pedido, producto]
+            }
+    
+        }else{
+            // Eliminar elementos cuando la cantidad es 0
+        const resultado = pedido.filter( articulo => articulo.id !== producto.id)
+        cliente.pedido = [...resultado]
+        }
+
+    // MOSTRAR EL RESUMEN
+    actualizarResumen()
+}
+
+function actualizarResumen(){
+    const contenido = document.querySelector('#resumen .contenido')
+    const resumen = document.createElement('DIV')
+    resumen.classList.add('col-md-6')
+
+    const mesa = document.createElement('P');
+    mesa.textContent = 'Mesa: ';
+    mesa.classList.add('fw-bold');
+
+    const mesaSpan = document.createElement('SPAN');
+    mesaSpan.textContetn = cliente.mesa;
+    mesaSpan.classList.add('fw-normal');
+
+    mesa.appendChild(mesaSpan);
+
+    contenido.appendChild(mesa);
 }
